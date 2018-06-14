@@ -23,3 +23,8 @@ class BookSearchTest(LuigiTestCase):
     def test_input_isbn_when_arg_and_res_same(self):
         isbn = '9784873117386'
         self.assertEqual('9784873117386', BookSearch(luigi.task).input_isbn(isbn))
+
+    def test_input_isbn_when_input_value_is_returned(self):
+        isbn = ''
+        __builtin__.raw_input = lambda _: '0123456789012'
+        self.assertEqual('0123456789012', BookSearch(luigi.task).input_isbn(isbn))
