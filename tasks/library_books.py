@@ -5,6 +5,7 @@ import re
 import luigi # luigi (2.7.5)
 import requests # pip requests (2.18.4)
 import nfc # pip nfcpy (0.13.4)
+import re
 
 class Lender(luigi.Task):
 
@@ -73,10 +74,10 @@ class BookSearch(luigi.Task):
         :param isbn:
         :return: isbn code
         """
-        while not isbn:
+        while re.match(r"^[0-9]{13}$", isbn) is None:
             isbn = raw_input('Please enter the ISBN code starting with 9 :\n')
-            if isbn:
-                break
+            print isbn
+
         return isbn
 
     def search(self, isbn):
