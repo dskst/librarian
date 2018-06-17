@@ -76,7 +76,6 @@ class BookSearch(luigi.Task):
         """
         while re.match(r"^[0-9]{13}$", isbn) is None:
             isbn = raw_input('Please enter the ISBN code starting with 9 :\n')
-            print isbn
 
         return isbn
 
@@ -86,18 +85,21 @@ class BookSearch(luigi.Task):
         :param isbn: 13 digit ISBN code
         :return: book detail for json
         """
+        if not isbn:
+            raise RuntimeError('ISBN must not empty')
+
         try:
             r = requests.get(self.search_api + isbn)
         except Exception:
             raise RuntimeError('Could not connect to book search API')
 
         if r.status_code != requests.codes.ok:
-            raise RuntimeError('Book not found')
+            raise RuntimeError('Status code is ' + r.status_code)
 
         book_detail = r.json()
 
         if not book_detail['totalItems'] or int(book_detail['totalItems']) == 0:
-            raise RuntimeError('Book not found')
+            raise RuntimeError('Book is not found')
 
         return book_detail
 
