@@ -1,7 +1,6 @@
 # coding:utf-8
 import datetime
 import json
-import re
 import luigi # luigi (2.7.5)
 import requests # pip requests (2.18.4)
 import nfc # pip nfcpy (0.13.4)
@@ -13,12 +12,7 @@ class Lender(luigi.Task):
     id_name = luigi.Parameter()
 
     def run(self):
-        user_id = ''
-        while not user_id:
-            user_id = raw_input('Please enter the {id_name}:\n'.format(id_name=self.id_name))
-            if user_id:
-                # TODO: regex
-                break
+        user_id = self.input_user_id()
 
         with self.output().open('w') as file:
             file.write(user_id)
@@ -32,6 +26,20 @@ class Lender(luigi.Task):
                 raise RuntimeError('NFC loading failed')
 
         return luigi.LocalTarget('data/users/{file}.dat'.format(file=self.user_key))
+
+    def input_user_id(self):
+        """
+        Input for user id
+            format is alphanumeric and some symbols.
+        :return: input user id
+        """
+        user_id = ''
+        while not user_id:
+            user_id = raw_input('Please enter the {id_name}:\n'.format(id_name=self.id_name))
+            if re.match(r"^[0-9a-zA-Z\.\-\_@]+$", user_id) is None:
+                break
+
+        return user_id
 
     def __nfc_startup(self, target):
         print 'Please NFC card　on the reader:'

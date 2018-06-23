@@ -5,9 +5,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
 
 import luigi
 import luigi.notifications
-from luigi.mock import MockTarget
 from helpers import LuigiTestCase
-import re
 
 import __builtin__
 from tasks.library_books import BookSearch
@@ -19,7 +17,7 @@ class BookSearchTest(LuigiTestCase):
     # def test_run(self):
     #     __builtin__.raw_input = lambda _: '9784873117386'
     #     self.run_locally(['BookSearch'])
-    #     # TODO: run's tet
+    #     # TODO: run's test
 
     def test_input_isbn_when_arg_and_res_same(self):
         isbn = '9784873117386'
@@ -50,3 +48,4 @@ class BookSearchTest(LuigiTestCase):
     def test_search_when_normal(self):
         response = BookSearch(luigi.task).search('9784873117386')
         self.assertEquals(1, response['totalItems'])
+
