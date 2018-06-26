@@ -5,6 +5,7 @@ import luigi # luigi (2.7.5)
 import requests # pip requests (2.18.4)
 import nfc # pip nfcpy (0.13.4)
 import re
+from google.cloud import datastore
 
 class Lender(luigi.Task):
 
@@ -126,6 +127,54 @@ class Rental(luigi.Task):
     def output(self):
         return luigi.LocalTarget(datetime.datetime.now().strftime('logs/%Y-%m-%d.%H%M%S.log'))
 
+
+class BookRegister(luigi.Task):
+
+    isbn = luigi.Parameter(default='')
+
+    def requires(self):
+        return BookSearch(self.isbn)
+
+    def run(self):
+        """
+        Search book from Google Cloud Datastore.
+        If book does not exist, it is newly registered.
+        TODO: Make it work on other then Google Cloud Datastore.
+        """
+
+        # Search for Google Cloud Datastore
+        client = datastore.Client()
+        key = client.key('Book', self.isbn)
+        response = client.get(key)
+
+        if response is not None:
+            result = 'already exist'
+
+        else:
+            data = datastore.Entity(key = key, exclude_from_indexes = ['description', 'imageLinks', 'isLent'])
+
+            with self.input().open('r') as file:
+                book = json.loads(file.read())
+
+            data['title'] = book['items'][0]['volumeInfo']['title']
+            data['description'] = book['items'][0]['volumeInfo']['description']
+            data['imageLinks'] = book['items'][0]['volumeInfo']['imageLinks']
+            data['isLent'] = False
+            data['createdAt'] = datetime.datetime.utcnow()
+            data['updatedAt'] = datetime.datetime.utcnow()
+
+            client.put(data)
+            result = 'registered'
+
+        message = 'ISBN:{isbn} is {result}'.format(isbn=self.isbn, result=result)
+
+        print message
+
+        with self.output().open('w') as file:
+            file.write(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S {message}'.format(message=message)))
+
+    def output(self):
+        return luigi.LocalTarget(datetime.datetime.now().strftime('logs/%Y-%m-%d.register.{isbn}.log'.format(isbn=self.isbn)))
 
 if __name__ == '__main__':
     luigi.run()
