@@ -119,13 +119,52 @@ class Rental(luigi.Task):
     user_key = luigi.Parameter(default='')
 
     def requires(self):
-        return [BookSearch(self.isbn), Lender(self.user_key)]
+        return {'book':BookSearch(self.isbn), 'user':Lender(self.user_key)}
 
     def run(self):
-        print('{action} of books is completed!'.format(action='dummy'))
+        with self.input()['book'].open('r') as file:
+            book = json.loads(file.read())
+            if not self.isbn:
+                for identifier in book['items'][0]['volumeInfo']['industryIdentifiers']:
+                    if identifier['type'] == 'ISBN_13':
+                        self.isbn = identifier['identifier']
+
+        with self.input()['user'].open('r') as file:
+            userid = file.read()
+
+        # Update for Google Cloud Datastore
+        client = datastore.Client()
+        key = client.key('Book', self.isbn)
+        response = client.get(key)
+
+        if response is None:
+            message = '[WARNING]Book not registered. ISBN:{isbn}'.format(isbn=self.isbn)
+
+        else:
+            now = datetime.datetime.utcnow()
+            render = {'userId':userid, 'rentalAt': now}
+            renders = []
+            if 'renders' in response:
+                renders.append(response['renders'])
+            renders.append(render)
+
+            data = datastore.Entity(key = key, exclude_from_indexes = ['description', 'imageLinks', 'isLent'])
+            data['title'] = book['items'][0]['volumeInfo']['title']
+            data['description'] = book['items'][0]['volumeInfo']['description']
+            data['imageLinks'] = book['items'][0]['volumeInfo']['imageLinks']
+            data['isLent'] = True if response['isLent'] == True else False
+            data['renders'] = renders
+            data['createdAt'] = response['createdAt']
+            data['updatedAt'] = now
+            client.put(data)
+
+            message = '{action} of books is completed!'.format(action='dummy')
+
+        with self.output().open('w') as file:
+            file.write(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S {message}'.format(message=message)))
 
     def output(self):
-        return luigi.LocalTarget(datetime.datetime.now().strftime('logs/%Y-%m-%d.%H%M%S.log'))
+        return luigi.LocalTarget(datetime.datetime.now().strftime('logs/%Y-%m-%d.%H:%M:%S.rental.log'))
 
 
 class BookRegister(luigi.Task):
