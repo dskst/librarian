@@ -132,7 +132,7 @@ class Rental(luigi.Task):
         with self.input()['user'].open('r') as file:
             userid = file.read()
 
-        # Update for Google Cloud Datastore
+        # Fetch data of book and lender
         client = datastore.Client()
         key = client.key('Book', self.isbn)
         response = client.get(key)
@@ -141,24 +141,31 @@ class Rental(luigi.Task):
             message = '[WARNING]Book not registered. ISBN:{isbn}'.format(isbn=self.isbn)
 
         else:
-            now = datetime.datetime.utcnow()
-            render = {'userId':userid, 'rentalAt': now}
+            data = datastore.Entity(key = key, exclude_from_indexes = ['description', 'imageLinks', 'isLent'])
+
+            now = datetime.datetime.now()
+            is_lent = True if response['isLent'] == False else False
+
             renders = []
             if 'renders' in response:
-                renders.append(response['renders'])
-            renders.append(render)
+                renders.extend(response['renders'])
+            renders.extend([{'userId':unicode(userid), 'isLent':is_lent, 'createdAt': now}])
 
-            data = datastore.Entity(key = key, exclude_from_indexes = ['description', 'imageLinks', 'isLent'])
             data['title'] = book['items'][0]['volumeInfo']['title']
             data['description'] = book['items'][0]['volumeInfo']['description']
             data['imageLinks'] = book['items'][0]['volumeInfo']['imageLinks']
-            data['isLent'] = True if response['isLent'] == True else False
+            data['latestLender'] = unicode(userid)
+            data['isLent'] = is_lent
             data['renders'] = renders
             data['createdAt'] = response['createdAt']
             data['updatedAt'] = now
-            client.put(data)
 
-            message = '{action} of books is completed!'.format(action='dummy')
+            with client.transaction():
+                client.put(data)
+
+            action = 'Rental' if is_lent == True else 'Returning'
+            message = '[{title}] {action} is completed!'.format(title=data['title'].encode('utf_8'), action=action)
+            print message
 
         with self.output().open('w') as file:
             file.write(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S {message}'.format(message=message)))
@@ -191,6 +198,7 @@ class BookRegister(luigi.Task):
 
         else:
             data = datastore.Entity(key = key, exclude_from_indexes = ['description', 'imageLinks', 'isLent'])
+            now = datetime.datetime.now()
 
             with self.input().open('r') as file:
                 book = json.loads(file.read())
@@ -199,8 +207,8 @@ class BookRegister(luigi.Task):
             data['description'] = book['items'][0]['volumeInfo']['description']
             data['imageLinks'] = book['items'][0]['volumeInfo']['imageLinks']
             data['isLent'] = False
-            data['createdAt'] = datetime.datetime.utcnow()
-            data['updatedAt'] = datetime.datetime.utcnow()
+            data['createdAt'] = now
+            data['updatedAt'] = now
 
             client.put(data)
             result = 'registered'
