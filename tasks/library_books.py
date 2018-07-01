@@ -171,7 +171,7 @@ class Rental(luigi.Task):
             file.write(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S {message}'.format(message=message)))
 
     def output(self):
-        return luigi.LocalTarget(datetime.datetime.now().strftime('logs/%Y-%m-%d.%H:%M:%S.rental.log'))
+        return luigi.LocalTarget(datetime.datetime.now().strftime('logs/%Y-%m-%d.%H%M%S.rental.log'))
 
 
 class BookRegister(luigi.Task):
