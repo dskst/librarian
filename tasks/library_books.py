@@ -7,6 +7,9 @@ import nfc # pip nfcpy (0.13.4)
 import re
 from google.cloud import datastore
 
+from director import RegisterDirector, RentalDirector
+from builder import DataStoreBuilder
+
 class Lender(luigi.Task):
 
     user_key = luigi.Parameter(default='')
@@ -197,20 +200,14 @@ class BookRegister(luigi.Task):
             result = 'already exist'
 
         else:
-            data = datastore.Entity(key = key, exclude_from_indexes = ['description', 'imageLinks', 'isLent'])
-            now = datetime.datetime.now()
+            entity = datastore.Entity(key = key, exclude_from_indexes = ['description', 'imageLinks', 'isLent'])
 
             with self.input().open('r') as file:
                 book = json.loads(file.read())
 
-            data['title'] = book['items'][0]['volumeInfo']['title']
-            data['description'] = book['items'][0]['volumeInfo']['description']
-            data['imageLinks'] = book['items'][0]['volumeInfo']['imageLinks']
-            data['isLent'] = False
-            data['createdAt'] = now
-            data['updatedAt'] = now
+            registration = RegisterDirector(book).build(DataStoreBuilder(entity))
 
-            client.put(data)
+            client.put(registration)
             result = 'registered'
 
         message = 'ISBN:{isbn} is {result}'.format(isbn=self.isbn, result=result)

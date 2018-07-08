@@ -52,40 +52,40 @@ class Builder:
 
 class DataStoreBuilder(Builder):
 
-    def __init__(self):
-        self.data = {}
+    def __init__(self, entity):
+        self.entity = entity
 
     def get(self):
-        return self.data
+        return self.entity
 
     def add_isbn(self, isbn):
-        self.data['isbn'] = isbn
+        self.entity['isbn'] = isbn
 
     def add_title(self, title):
-        self.data['title'] = unicode(title)
+        self.entity['title'] = unicode(title)
 
     def add_description(self, description):
-        self.data['description'] = unicode(description)
+        self.entity['description'] = unicode(description)
 
     def add_image_links(self, image_links):
-        self.data['image_links'] = image_links
+        self.entity['imageLinks'] = image_links
 
     def add_is_lent(self, is_lent):
-        self.data['is_lent'] = is_lent
+        self.entity['isLent'] = is_lent
 
     def add_latest_lender(self, latest_lender):
-        self.data['latest_lender'] = latest_lender
+        self.entity['latestLender'] = latest_lender
 
     def add_renders(self, renders):
-        self.data['renders'] = renders
+        self.entity['renders'] = renders
 
     def add_stocked_at(self, stocked_at):
-        self.data['stocked_at'] = stocked_at
+        self.entity['stockedAt'] = stocked_at
 
     def add_created_at(self, created_at):
-        self.data['created_at'] = created_at
+        self.entity['createdAt'] = created_at
 
     def add_updated_at(self, updated_at):
-        self.data['updated_at'] = updated_at
+        self.entity['updatedAt'] = updated_at
 
 

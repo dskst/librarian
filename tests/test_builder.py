@@ -11,6 +11,7 @@ from tasks.builder import DataStoreBuilder
 class DataStoreBuilderTest(unittest.TestCase):
 
     def setUp(self):
+        self.entity = {}
         self.now = datetime.datetime.now()
         self.title = 'This is just Test'
         self.description = 'This is just Test. It\'s so cool'
@@ -23,13 +24,13 @@ class DataStoreBuilderTest(unittest.TestCase):
         self.updated_at = self.now
 
     def test_add_tile_when_convert_unicode(self):
-        builder = DataStoreBuilder()
+        builder = DataStoreBuilder(self.entity)
         builder.add_title(self.title)
         response = builder.get()
         self.assertEqual(unicode(self.title), response['title'])
 
     def test_add_description_when_convert_unicode(self):
-        builder = DataStoreBuilder()
+        builder = DataStoreBuilder(self.entity)
         builder.add_description(self.description)
         response = builder.get()
         self.assertEqual(unicode(self.description), response['description'])
