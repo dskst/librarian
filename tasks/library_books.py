@@ -197,28 +197,27 @@ class BookRegister(luigi.Task):
         response = client.get(key)
 
         if response is not None:
-            result = 'already exist'
+            raise RuntimeError('ISBN:{isbn} is already exists'.format(isbn=self.isbn))
 
-        else:
-            entity = datastore.Entity(key = key, exclude_from_indexes = ['description', 'imageLinks', 'isLent'])
+        # Read json from BookSearch.output
+        with self.input().open('r') as file:
+            book = json.loads(file.read())
 
-            with self.input().open('r') as file:
-                book = json.loads(file.read())
+        # Put for Datastore
+        entity = datastore.Entity(key=key, exclude_from_indexes=['description', 'imageLinks', 'isLent'])
+        registration = RegisterDirector(book).build(DataStoreBuilder(entity))
+        client.put(registration)
 
-            registration = RegisterDirector(book).build(DataStoreBuilder(entity))
-
-            client.put(registration)
-            result = 'registered'
-
-        message = 'ISBN:{isbn} is {result}'.format(isbn=self.isbn, result=result)
-
-        print message
+        message = 'ISBN:{isbn} is registered'.format(isbn=self.isbn)
 
         with self.output().open('w') as file:
             file.write(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S {message}'.format(message=message)))
 
+        print message
+
     def output(self):
         return luigi.LocalTarget(datetime.datetime.now().strftime('logs/%Y-%m-%d.register.{isbn}.log'.format(isbn=self.isbn)))
+
 
 if __name__ == '__main__':
     luigi.run()
