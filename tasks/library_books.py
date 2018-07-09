@@ -7,6 +7,9 @@ import nfc # pip nfcpy (0.13.4)
 import re
 from google.cloud import datastore
 
+from director import RegisterDirector, RentalDirector
+from builder import DataStoreBuilder
+
 class Lender(luigi.Task):
 
     user_key = luigi.Parameter(default='')
@@ -194,34 +197,27 @@ class BookRegister(luigi.Task):
         response = client.get(key)
 
         if response is not None:
-            result = 'already exist'
+            raise RuntimeError('ISBN:{isbn} is already exists'.format(isbn=self.isbn))
 
-        else:
-            data = datastore.Entity(key = key, exclude_from_indexes = ['description', 'imageLinks', 'isLent'])
-            now = datetime.datetime.now()
+        # Read json from BookSearch.output
+        with self.input().open('r') as file:
+            book = json.loads(file.read())
 
-            with self.input().open('r') as file:
-                book = json.loads(file.read())
+        # Put for Datastore
+        entity = datastore.Entity(key=key, exclude_from_indexes=['description', 'imageLinks', 'isLent'])
+        registration = RegisterDirector(book).build(DataStoreBuilder(entity))
+        client.put(registration)
 
-            data['title'] = book['items'][0]['volumeInfo']['title']
-            data['description'] = book['items'][0]['volumeInfo']['description']
-            data['imageLinks'] = book['items'][0]['volumeInfo']['imageLinks']
-            data['isLent'] = False
-            data['createdAt'] = now
-            data['updatedAt'] = now
-
-            client.put(data)
-            result = 'registered'
-
-        message = 'ISBN:{isbn} is {result}'.format(isbn=self.isbn, result=result)
-
-        print message
+        message = 'ISBN:{isbn} is registered'.format(isbn=self.isbn)
 
         with self.output().open('w') as file:
             file.write(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S {message}'.format(message=message)))
 
+        print message
+
     def output(self):
         return luigi.LocalTarget(datetime.datetime.now().strftime('logs/%Y-%m-%d.register.{isbn}.log'.format(isbn=self.isbn)))
+
 
 if __name__ == '__main__':
     luigi.run()
