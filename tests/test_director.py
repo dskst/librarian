@@ -20,12 +20,13 @@ class DirectorTest(unittest.TestCase):
 
         # Rental
         userid = 'ABC123'
-        params = {}
-        params['latest_lender'] = unicode(userid)
-        params['is_lent'] = False
-        params['renders'] = {'userId':unicode(userid), 'isLent':False, 'createdAt': self.now}
-        params['created_at'] = self.now
-        params['stocked_at'] = self.now
+        params = {
+            'latest_lender': unicode(userid),
+            'is_lent': False,
+            'created_at': self.now,
+            'stocked_at': self.now
+        }
+        params['registered_data'] = params
         self.rentalation = RentalDirector(self.book, **params).build(DataStoreBuilder(self.entity))
 
     def test_register_director_title_must_much(self):

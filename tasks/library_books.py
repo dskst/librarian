@@ -145,20 +145,14 @@ class Rental(luigi.Task):
 
         entity = datastore.Entity(key = key, exclude_from_indexes = ['description', 'imageLinks', 'isLent'])
 
-        now = datetime.datetime.now()
         is_lent = True if response['isLent'] == False else False
 
-        renders = []
-        if 'renders' in response:
-            renders.extend(response['renders'])
-        renders.extend([{'userId':unicode(userid), 'isLent':is_lent, 'createdAt': now}])
-
         params = dict(
-            latest_lender=userid,
+            latest_lender=unicode(userid),
             is_lent=is_lent,
-            renders=renders,
             stocked_at=response['stockedAt'],
-            created_at=response['createdAt']
+            created_at=response['createdAt'],
+            registered_data=response
         )
 
         registration = RentalDirector(book, **params).build(DataStoreBuilder(entity))
