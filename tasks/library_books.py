@@ -141,34 +141,28 @@ class Rental(luigi.Task):
         response = client.get(key)
 
         if response is None:
-            message = '[WARNING]Book not registered. ISBN:{isbn}'.format(isbn=self.isbn)
+            raise RuntimeError('Book not registered. ISBN:{isbn}'.format(isbn=self.isbn))
 
-        else:
-            data = datastore.Entity(key = key, exclude_from_indexes = ['description', 'imageLinks', 'isLent'])
+        entity = datastore.Entity(key = key, exclude_from_indexes = ['description', 'imageLinks', 'isLent'])
 
-            now = datetime.datetime.now()
-            is_lent = True if response['isLent'] == False else False
+        is_lent = True if response['isLent'] == False else False
 
-            renders = []
-            if 'renders' in response:
-                renders.extend(response['renders'])
-            renders.extend([{'userId':unicode(userid), 'isLent':is_lent, 'createdAt': now}])
+        params = dict(
+            latest_lender=unicode(userid),
+            is_lent=is_lent,
+            stocked_at=response['stockedAt'],
+            created_at=response['createdAt'],
+            registered_data=response
+        )
 
-            data['title'] = book['items'][0]['volumeInfo']['title']
-            data['description'] = book['items'][0]['volumeInfo']['description']
-            data['imageLinks'] = book['items'][0]['volumeInfo']['imageLinks']
-            data['latestLender'] = unicode(userid)
-            data['isLent'] = is_lent
-            data['renders'] = renders
-            data['createdAt'] = response['createdAt']
-            data['updatedAt'] = now
+        registration = RentalDirector(book, **params).build(DataStoreBuilder(entity))
 
-            with client.transaction():
-                client.put(data)
+        with client.transaction():
+            client.put(registration)
 
-            action = 'Rental' if is_lent == True else 'Returning'
-            message = '[{title}] {action} is completed!'.format(title=data['title'].encode('utf_8'), action=action)
-            print message
+        action = 'Rental' if is_lent == True else 'Returning'
+        message = '[{title}] {action} is completed!'.format(title=book['items'][0]['volumeInfo']['title'].encode('utf_8'), action=action)
+        print message
 
         with self.output().open('w') as file:
             file.write(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S {message}'.format(message=message)))
