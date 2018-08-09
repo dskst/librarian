@@ -185,6 +185,13 @@ class BookRegister(luigi.Task):
         TODO: Make it work on other then Google Cloud Datastore.
         """
 
+        # Read json from BookSearch.output
+        with self.input().open('r') as file:
+            book = json.loads(file.read())
+            for identifier in book['items'][0]['volumeInfo']['industryIdentifiers']:
+                if identifier['type'] == 'ISBN_13':
+                    self.isbn = identifier['identifier']
+
         # Search for Google Cloud Datastore
         client = datastore.Client()
         key = client.key('Book', self.isbn)
@@ -192,10 +199,6 @@ class BookRegister(luigi.Task):
 
         if response is not None:
             raise RuntimeError('ISBN:{isbn} is already exists'.format(isbn=self.isbn))
-
-        # Read json from BookSearch.output
-        with self.input().open('r') as file:
-            book = json.loads(file.read())
 
         # Put for Datastore
         entity = datastore.Entity(key=key, exclude_from_indexes=['description', 'imageLinks', 'isLent'])
