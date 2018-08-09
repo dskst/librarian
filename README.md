@@ -53,15 +53,20 @@ $ export GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json
 Make entity for Google Cloud Datastore.
 
 for example
-```json
-created_at: 2018-06-03 (23:42:11.111) JST
+```
+Kind: Book
+Key: Book name:9784873117768
+Key literal: Key(Book, '9784873117768')
+
+createdAt: 2018-07-10 (08:35:35.113) JST Indexed
 description: Dockerを活用するために求められる知識・技術を総合的に解説。セキュリティやモニタリングと行った運用面まで踏み込んだ内容。
-imageLinks: {"smallThumbnail":"http://books.google.com/books/content?id=BFsovgAACAAJ&printsec=frontcover&img=1&zoom=5&source=gbs_api","thumbnail":"http://books.google.com/books/content?id=BFsovgAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"}
-is_lent: false
-isbn10: 4873117763 Indexed
-latest_lender_id: test123 Indexed
+imageLinks: {"thumbnail":"http://books.google.com/books/content?id=BFsovgAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api","smallThumbnail":"http://books.google.com/books/content?id=BFsovgAACAAJ&printsec=frontcover&img=1&zoom=5&source=gbs_api"}
+isLent: false
+latestLender: abi01082 Indexed
+renders: [{"userId":"test123","isLent":true,"createdAt":"2018-08-04T10:43:30.913143Z"},{"userId":"test456","isLent":false,"createdAt":"2018-08-04T10:45:15.343265Z"}] Indexed
+stockedAt: 2018-07-10 (08:35:35.113) JST Indexed
 title: Docker Indexed
-updated_at: 2018-06-03 (23:42:11.111) JST
+updatedAt: 2018-08-04 (19:45:15.343) JST Indexed
 ```
 
 ## Usage
