@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime
+from pytz import timezone
 
 class RentalDirector:
 
@@ -10,7 +11,7 @@ class RentalDirector:
         self.stocked_at = stocked_at
         self.created_at = created_at
         self.registered_data = registered_data
-        self.now = datetime.datetime.now()
+        self.now = timezone('Asia/Tokyo').localize(datetime.datetime.now())
 
     def build(self, builder):
 
@@ -42,7 +43,7 @@ class RegisterDirector:
 
     def __init__(self, book):
         self.book = book
-        self.now = datetime.datetime.now()
+        self.now = timezone('Asia/Tokyo').localize(datetime.datetime.now())
 
     def build(self, builder):
         builder.add_title(self.book['items'][0]['volumeInfo']['title'])
