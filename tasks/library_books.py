@@ -71,7 +71,9 @@ class BookSearch(luigi.Task):
     search_api = luigi.Parameter()
 
     def run(self):
-        self.isbn = self.input_isbn(self.isbn)
+        if not self.isbn:
+            self.isbn = self.input_isbn()
+
         response = self.search(self.isbn)
 
         with self.output().open('w') as file:
@@ -80,12 +82,13 @@ class BookSearch(luigi.Task):
     def output(self):
         return luigi.LocalTarget('data/books/{isbn}.json'.format(isbn=self.isbn))
 
-    def input_isbn(self, isbn):
+    def input_isbn(self):
         """
         Input for ISBN code
         :param isbn:
         :return: isbn code
         """
+        isbn = ''
         while re.match(r"^[0-9]{13}$", isbn) is None:
             isbn = raw_input('Please enter the ISBN code starting with 9 :\n')
 
