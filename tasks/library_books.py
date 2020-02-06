@@ -5,6 +5,7 @@ import luigi # luigi (2.7.5)
 import requests # pip requests (2.18.4)
 import nfc # pip nfcpy (0.13.4)
 import re
+import os
 from google.cloud import datastore
 
 from director import RegisterDirector, RentalDirector
@@ -74,10 +75,10 @@ class BookSearch(luigi.Task):
         if not self.isbn:
             self.isbn = self.input_isbn()
 
-        response = self.search(self.isbn)
-
-        with self.output().open('w') as file:
-            json.dump(response, file)
+        if not os.path.isfile('data/books/{isbn}.json'.format(isbn=self.isbn)):
+            response = self.search(self.isbn)
+            with self.output().open('w') as file:
+                json.dump(response, file)
 
     def output(self):
         return luigi.LocalTarget('data/books/{isbn}.json'.format(isbn=self.isbn))
