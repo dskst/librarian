@@ -41,7 +41,7 @@ class Lender(luigi.Task):
         user_id = ''
         while not user_id:
             user_id = raw_input('Please enter the {id_name}:\n'.format(id_name=self.id_name))
-            if re.match(r"^[0-9a-zA-Z\.\-\_@]+$", user_id) is None:
+            if re.match(r"^[0-9a-zA-Z\.\-\_@]+$", user_id) is not None:
                 break
 
         return user_id
